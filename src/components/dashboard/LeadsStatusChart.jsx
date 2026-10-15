@@ -1,45 +1,118 @@
+import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
-const statusData = [
-  {
-    name: "New",
-    value: 20,
-    percentage: "13.5%",
-    color: "#8b5cf6",
-  },
-  {
-    name: "Contacted",
-    value: 14,
-    percentage: "9.5%",
-    color: "#3b82f6",
-  },
-  {
-    name: "Meeting Scheduled",
-    value: 8,
-    percentage: "5.4%",
-    color: "#06b6d4",
-  },
-  {
-    name: "Proposal Sent",
-    value: 5,
-    percentage: "3.4%",
-    color: "#f59e0b",
-  },
-  {
-    name: "Won",
-    value: 3,
-    percentage: "2%",
-    color: "#22c55e",
-  },
-  {
-    name: "Lost",
-    value: 4,
-    percentage: "2.7%",
-    color: "#ef4444",
-  },
-];
+const statusDataByRange = {
+  month: [
+    {
+      name: "New",
+      value: 20,
+      color: "#8b5cf6",
+    },
+    {
+      name: "Contacted",
+      value: 14,
+      color: "#3b82f6",
+    },
+    {
+      name: "Meeting Scheduled",
+      value: 8,
+      color: "#06b6d4",
+    },
+    {
+      name: "Proposal Sent",
+      value: 5,
+      color: "#f59e0b",
+    },
+    {
+      name: "Won",
+      value: 3,
+      color: "#22c55e",
+    },
+    {
+      name: "Lost",
+      value: 4,
+      color: "#ef4444",
+    },
+  ],
+
+  week: [
+    {
+      name: "New",
+      value: 11,
+      color: "#8b5cf6",
+    },
+    {
+      name: "Contacted",
+      value: 8,
+      color: "#3b82f6",
+    },
+    {
+      name: "Meeting Scheduled",
+      value: 5,
+      color: "#06b6d4",
+    },
+    {
+      name: "Proposal Sent",
+      value: 3,
+      color: "#f59e0b",
+    },
+    {
+      name: "Won",
+      value: 2,
+      color: "#22c55e",
+    },
+    {
+      name: "Lost",
+      value: 3,
+      color: "#ef4444",
+    },
+  ],
+
+  year: [
+    {
+      name: "New",
+      value: 96,
+      color: "#8b5cf6",
+    },
+    {
+      name: "Contacted",
+      value: 72,
+      color: "#3b82f6",
+    },
+    {
+      name: "Meeting Scheduled",
+      value: 48,
+      color: "#06b6d4",
+    },
+    {
+      name: "Proposal Sent",
+      value: 31,
+      color: "#f59e0b",
+    },
+    {
+      name: "Won",
+      value: 18,
+      color: "#22c55e",
+    },
+    {
+      name: "Lost",
+      value: 21,
+      color: "#ef4444",
+    },
+  ],
+};
 
 function LeadsStatusChart() {
+  const [range, setRange] = useState("month");
+
+  const rawStatusData = statusDataByRange[range];
+
+  const total = rawStatusData.reduce((sum, status) => sum + status.value, 0);
+
+  const statusData = rawStatusData.map((status) => ({
+    ...status,
+    percentage: `${((status.value / total) * 100).toFixed(1)}%`,
+  }));
   return (
     <section
       className="rounded-2xl border p-5"
@@ -64,13 +137,14 @@ function LeadsStatusChart() {
         </div>
 
         <select
+          value={range}
+          onChange={(event) => setRange(event.target.value)}
           className="rounded-lg border px-3 py-1.5 text-xs outline-none"
           style={{
             backgroundColor: "var(--input-bg)",
             borderColor: "var(--border-primary)",
             color: "var(--text-secondary)",
           }}
-          defaultValue="month"
         >
           <option value="month">This Month</option>
           <option value="week">This Week</option>

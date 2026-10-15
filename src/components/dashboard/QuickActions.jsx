@@ -1,8 +1,32 @@
-import { UserPlus, ListTodo, CalendarPlus, ArrowRight } from "lucide-react";
+import {
+  UserPlus,
+  ListTodo,
+  CalendarPlus,
+  Upload,
+  ArrowRight,
+} from "lucide-react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function QuickActions() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      alert("Please select a CSV file.");
+      event.target.value = "";
+      return;
+    }
+
+    setSelectedFile(file);
+  };
 
   const actions = [
     {
@@ -26,12 +50,20 @@ function QuickActions() {
       color: "cyan",
       action: () => navigate("/calendar"),
     },
+    {
+      label: selectedFile ? "CSV Selected" : "Import Leads",
+      description: selectedFile ? selectedFile.name : "Import leads from CSV",
+      icon: Upload,
+      color: "green",
+      action: () => fileInputRef.current?.click(),
+    },
   ];
 
   const iconStyles = {
     purple: "bg-purple-500/15 text-purple-400",
     blue: "bg-blue-500/15 text-blue-400",
     cyan: "bg-cyan-500/15 text-cyan-400",
+    green: "bg-green-500/15 text-green-400",
   };
 
   return (
@@ -42,6 +74,7 @@ function QuickActions() {
         borderColor: "var(--border-primary)",
       }}
     >
+      {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2
@@ -57,6 +90,16 @@ function QuickActions() {
         </div>
       </div>
 
+      {/* Hidden File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      {/* Actions */}
       <div className="space-y-2">
         {actions.map((action) => {
           const Icon = action.icon;
@@ -64,15 +107,18 @@ function QuickActions() {
           return (
             <button
               key={action.label}
+              type="button"
               onClick={action.action}
-              className="group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200"
+              className="group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 hover:bg-white/[0.03]"
               style={{
                 backgroundColor: "var(--input-bg)",
                 borderColor: "var(--border-secondary)",
               }}
             >
               <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconStyles[action.color]}`}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                  iconStyles[action.color]
+                }`}
               >
                 <Icon size={16} strokeWidth={1.8} />
               </div>
@@ -86,7 +132,7 @@ function QuickActions() {
                 </p>
 
                 <p
-                  className="mt-0.5 text-[10px]"
+                  className="mt-0.5 truncate text-[10px]"
                   style={{ color: "var(--text-muted)" }}
                 >
                   {action.description}

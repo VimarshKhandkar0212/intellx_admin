@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import {
   Area,
   AreaChart,
@@ -8,26 +10,57 @@ import {
   YAxis,
 } from "recharts";
 
-const data = [
-  { date: "Jul 1", leads: 7 },
-  { date: "Jul 3", leads: 12 },
-  { date: "Jul 5", leads: 17 },
-  { date: "Jul 7", leads: 13 },
-  { date: "Jul 9", leads: 21 },
-  { date: "Jul 11", leads: 19 },
-  { date: "Jul 13", leads: 24 },
-  { date: "Jul 15", leads: 25 },
-  { date: "Jul 17", leads: 22 },
-  { date: "Jul 19", leads: 19 },
-  { date: "Jul 21", leads: 27 },
-  { date: "Jul 23", leads: 30 },
-  { date: "Jul 25", leads: 27 },
-  { date: "Jul 27", leads: 31 },
-  { date: "Jul 29", leads: 30 },
-  { date: "Jul 31", leads: 29 },
-];
+const chartData = {
+  month: [
+    { date: "Jul 1", leads: 7 },
+    { date: "Jul 3", leads: 12 },
+    { date: "Jul 5", leads: 17 },
+    { date: "Jul 7", leads: 13 },
+    { date: "Jul 9", leads: 21 },
+    { date: "Jul 11", leads: 19 },
+    { date: "Jul 13", leads: 24 },
+    { date: "Jul 15", leads: 25 },
+    { date: "Jul 17", leads: 22 },
+    { date: "Jul 19", leads: 19 },
+    { date: "Jul 21", leads: 27 },
+    { date: "Jul 23", leads: 30 },
+    { date: "Jul 25", leads: 27 },
+    { date: "Jul 27", leads: 31 },
+    { date: "Jul 29", leads: 30 },
+    { date: "Jul 31", leads: 29 },
+  ],
+
+  week: [
+    { date: "Mon", leads: 4 },
+    { date: "Tue", leads: 6 },
+    { date: "Wed", leads: 5 },
+    { date: "Thu", leads: 8 },
+    { date: "Fri", leads: 6 },
+    { date: "Sat", leads: 9 },
+    { date: "Sun", leads: 12 },
+  ],
+
+  year: [
+    { date: "Jan", leads: 42 },
+    { date: "Feb", leads: 51 },
+    { date: "Mar", leads: 48 },
+    { date: "Apr", leads: 63 },
+    { date: "May", leads: 72 },
+    { date: "Jun", leads: 81 },
+    { date: "Jul", leads: 96 },
+    { date: "Aug", leads: 112 },
+    { date: "Sep", leads: 128 },
+    { date: "Oct", leads: 139 },
+    { date: "Nov", leads: 151 },
+    { date: "Dec", leads: 168 },
+  ],
+};
 
 function LeadsOverviewChart() {
+  const [range, setRange] = useState("month");
+
+  const data = chartData[range];
+
   return (
     <section
       className="rounded-2xl border p-5"
@@ -52,13 +85,14 @@ function LeadsOverviewChart() {
         </div>
 
         <select
+          value={range}
+          onChange={(event) => setRange(event.target.value)}
           className="rounded-lg border px-3 py-1.5 text-xs outline-none"
           style={{
             backgroundColor: "var(--input-bg)",
             borderColor: "var(--border-primary)",
             color: "var(--text-secondary)",
           }}
-          defaultValue="month"
         >
           <option value="month">This Month</option>
           <option value="week">This Week</option>
@@ -100,7 +134,7 @@ function LeadsOverviewChart() {
               }}
               axisLine={false}
               tickLine={false}
-              interval={2}
+              interval={range === "week" ? 0 : 2}
             />
 
             <YAxis
@@ -110,8 +144,7 @@ function LeadsOverviewChart() {
               }}
               axisLine={false}
               tickLine={false}
-              domain={[0, 40]}
-              ticks={[0, 10, 20, 30, 40]}
+              domain={["auto", "auto"]}
             />
 
             <Tooltip
