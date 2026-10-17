@@ -9,17 +9,22 @@ import LeadsTable from "../components/leads/LeadsTable";
 import LeadDetails from "../components/leads/LeadDetails";
 import LeadAnalytics from "../components/leads/LeadAnalytics";
 import SystemStatus from "../components/leads/SystemStatus";
+import EditLeadModal from "../components/leads/EditLeadModal";
 
 function Leads() {
   const [selectedLead, setSelectedLead] = useState(null);
+  const [selectedLeadIds, setSelectedLeadIds] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const leadsPerPage = 10;
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [activeTab, setActiveTab] = useState("All Leads");
   const [sourceFilter, setSourceFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("All");
   const [editingLead, setEditingLead] = useState(null);
+  const [isAddLeadOpen, setIsAddLeadOpen] = useState(false);
 
-  const leads = [
+  const [leads, setLeads] = useState([
     {
       id: 1,
       name: "Rahul Verma",
@@ -80,7 +85,7 @@ function Leads() {
       source: "Instagram",
       createdAt: "Sep 5, 2026",
     },
-  ];
+  ]);
 
   const sourceData = [
     {
@@ -109,6 +114,9 @@ function Leads() {
       color: "#22c55e",
     },
   ];
+
+  console.log("leads:", leads);
+  console.log("isArray:", Array.isArray(leads));
 
   const filteredLeads = leads.filter((lead) => {
     const query = searchQuery.toLowerCase().trim();
@@ -181,6 +189,93 @@ function Leads() {
     );
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredLeads.length / leadsPerPage));
+
+  const startIndex = (currentPage - 1) * leadsPerPage;
+
+  const paginatedLeads = filteredLeads.slice (
+    startIndex, 
+    startIndex + leadsPerPage
+  );
+
+  const handleSaveLead = (updatedLead) => {
+    setLeads((prevLeads) =>
+      prevLeads.map((lead) =>
+        lead.id === updatedLead.id ? updatedLead : lead
+      )
+    );
+
+    if (selectedLead?.id === updatedLead.id) {
+      setSelectedLead(updatedLead);
+    }
+
+    setEditingLead(null);
+  };
+
+  const handleAddLead = (newLead) => {
+    const leadWithDetails = {
+      ...newLead,
+      id: Date.now(),
+      createdAt: new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+    };
+
+    setLeads((prevLeads) => [leadWithDetails, ...prevLeads]);
+    setActiveTab("All Leads");
+    setStatusFilter("All");
+    setSourceFilter("All");
+    setDateFilter("All");
+    setSearchQuery("");
+    setIsAddLeadOpen(false);
+  };
+
+  const handleDeleteLead = (leadToDelete) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${leadToDelete.name}?`
+    );
+
+    if (!confirmed) return;
+
+    setLeads((prevLeads) =>
+      prevLeads.filter((lead) => lead.id !== leadToDelete.id)
+    );
+
+    if (selectedLead?.id === leadToDelete.id) {
+      setSelectedLead(null);
+    }
+
+    setEditingLead((currentLead) =>
+      currentLead?.id === leadToDelete.id ? null : currentLead
+    );
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedLeadIds.length === 0) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${selectedLeadIds.length} selected leads?`
+    );
+
+    if (!confirmed) return;
+
+    setLeads((prevLeads) =>
+      prevLeads.filter((lead) => !selectedLeadIds.includes(lead.id))
+    );
+
+    if (selectedLead && selectedLeadIds.includes(selectedLead.id)) {
+      setSelectedLead(null);
+    }
+
+    setSelectedLeadIds([]);
+  };
+
+  const handleDuplicateLead = (duplicatedLead) => {
+    setLeads((prevLeads) => [duplicatedLead, ...prevLeads]);
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -200,8 +295,12 @@ function Leads() {
             Manage and track all your leads.
           </p>
         </div>
-
-        <button className="flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-purple-500">
+        <button
+          type="button"
+          onClick={() => setIsAddLeadOpen(true)}
+          className="flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-purple-500"
+        >
+        
           <UserPlus size={16} />
           Add New Lead
         </button>
@@ -228,10 +327,28 @@ function Leads() {
           setSourceFilter={setSourceFilter}
           dateFilter={dateFilter}
           setDateFilter={setDateFilter}
+          
         />
 
         {/* Status Tabs */}
         <LeadTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        {selectedLeadIds.length > 0 && (
+          <div className="flex items-center justify-between border-b px-4 py-3"
+            style={{ borderColor: "var(--border-secondary)" }}
+          >
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            {selectedLeadIds.length} lead(s) selected
+          </p>
+
+          <button
+            type="button"
+            onClick={handleBulkDelete}
+            className="flex items-center gap-2 rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 transition hover:bg-red-500/20"
+          >
+            Delete Selected
+          </button>
+        </div>
+        )}
 
         {/* Leads Content */}
         <div
@@ -245,10 +362,17 @@ function Leads() {
           <div className="min-w-0">
             {/* Leads Table */}
             <LeadsTable
-              leads={filteredLeads}
+              leads={paginatedLeads}
               selectedLead={selectedLead}
               setSelectedLead={setSelectedLead}
               onEditLead={setEditingLead}
+              onDeleteLead={handleDeleteLead}
+              onDuplicateLead={handleDuplicateLead}
+              selectedLeadIds={selectedLeadIds}
+              setSelectedLeadIds={setSelectedLeadIds}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
             />
           </div>
 
@@ -267,6 +391,22 @@ function Leads() {
         {/* System Status */}
         <SystemStatus />
       </div>
+
+      {editingLead && (
+        <EditLeadModal
+          lead={editingLead}
+          onClose={() => setEditingLead(null)}
+          onSave={handleSaveLead}
+        />
+      )}
+
+      {isAddLeadOpen && (
+        <EditLeadModal
+          lead={null}
+          onClose={() => setIsAddLeadOpen(false)}
+          onSave={handleAddLead}
+        />
+      )}
     </div>
   );
 }
