@@ -1,8 +1,10 @@
-import { Bell, Search, Moon, Sun } from "lucide-react";
-import { useTheme } from "../../context/ThemeContext";
+import { Bell, Search } from "lucide-react";
+import { useProfile } from "../../context/ProfileContext";
 
 function Topbar() {
-  const { theme, toggleTheme } = useTheme();
+  const { profile } = useProfile();
+  const fullName = `${profile.firstName} ${profile.lastName}`;
+
   return (
     <header
       className="fixed left-[220px] right-0 top-0 z-30 flex h-20 items-center justify-between border-b px-8 backdrop-blur-xl"
@@ -34,16 +36,6 @@ function Topbar() {
 
       {/* Right Section */}
       <div className="flex items-center gap-3">
-        {/* Theme */}
-        <button
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-          className="flex h-10 w-10 items-center justify-center rounded-xl transition"
-          style={{ color: "var(--text-secondary)" }}
-        >
-          {theme === "dark" ? <Sun size={19} /> : <Moon size={19} />}
-        </button>
-
         {/* Notification */}
         <button
           className="relative flex h-10 w-10 items-center justify-center rounded-xl transition"
@@ -59,8 +51,16 @@ function Topbar() {
           className="ml-2 flex items-center gap-3 border-l"
           style={{ borderColor: "var(--border-primary)" }}
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-blue-500 text-sm font-semibold text-white">
-            A
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-purple-500 to-blue-500 text-sm font-semibold text-white">
+            {profile.avatar ? (
+              <img
+                src={profile.avatar}
+                alt="Profile"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              profile.firstName.charAt(0).toUpperCase() || "A"
+            )}
           </div>
 
           <div className="hidden sm:block">
@@ -68,14 +68,7 @@ function Topbar() {
               className="text-sm font-medium"
               style={{ color: "var(--text-primary)" }}
             >
-              Admin
-            </p>
-
-            <p
-              className="text-sm font-medium"
-              style={{ color: "var(--text-primary)" }}
-            >
-              Administrator
+              {fullName}
             </p>
           </div>
         </div>

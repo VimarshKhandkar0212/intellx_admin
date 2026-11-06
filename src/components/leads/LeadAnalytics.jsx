@@ -8,7 +8,21 @@ import {
   PieChart as RechartsPieChart,
 } from "recharts";
 
-function LeadAnalytics({ sourceData }) {
+function LeadAnalytics({ 
+  sourceData,
+  onAddLead,
+  onImportCSV,
+  onExportCSV,
+}) {
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
+
+    if (file) onImportCSV(file);
+
+    event.target.value = "";
+  };
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.5fr_1fr]">
       {/* Lead Source Breakdown */}
@@ -133,7 +147,8 @@ function LeadAnalytics({ sourceData }) {
           {/* Add New Lead */}
           <button
             type="button"
-            className="group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition hover:border-purple-500/20 hover:bg-purple-500/5"
+            onClick={onAddLead}
+            className="quick-action-btn group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 hover:border-purple-500/60 hover:bg-purple-500/10 hover:shadow-md"
             style={{
               backgroundColor: "var(--input-bg)",
               borderColor: "var(--border-secondary)",
@@ -161,14 +176,26 @@ function LeadAnalytics({ sourceData }) {
           </button>
 
           {/* Import CSV */}
+
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            id="lead-csv-import"
+            onChange={handleFileChange}
+          />
+
           <button
             type="button"
-            className="group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition hover:border-blue-500/20 hover:bg-blue-500/5"
+            onClick={() =>
+              document.getElementById("lead-csv-import")?.click()
+            }
+            className="quick-action-btn group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 hover:border-blue-500/60 hover:bg-blue-500/10 hover:shadow-md"
             style={{
               backgroundColor: "var(--input-bg)",
               borderColor: "var(--border-secondary)",
             }}
-          >
+          > 
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/15 text-blue-400">
               <Upload size={16} />
             </div>
@@ -184,7 +211,7 @@ function LeadAnalytics({ sourceData }) {
               <p
                 className="mt-0.5 text-[10px]"
                 style={{ color: "var(--text-muted)" }}
-              >
+              >  
                 Import leads from a CSV file
               </p>
             </div>
@@ -193,7 +220,8 @@ function LeadAnalytics({ sourceData }) {
           {/* Export CSV */}
           <button
             type="button"
-            className="group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition hover:border-cyan-500/20 hover:bg-cyan-500/5"
+            onClick={onExportCSV} 
+            className="quick-action-btn group flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 hover:border-cyan-500/60 hover:bg-cyan-500/10 hover:shadow-md"
             style={{
               backgroundColor: "var(--input-bg)",
               borderColor: "var(--border-secondary)",

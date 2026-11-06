@@ -10,6 +10,7 @@ import LeadDetails from "../components/leads/LeadDetails";
 import LeadAnalytics from "../components/leads/LeadAnalytics";
 import SystemStatus from "../components/leads/SystemStatus";
 import EditLeadModal from "../components/leads/EditLeadModal";
+import LeadNotesModal from "../components/leads/LeadNotesModal";
 
 function Leads() {
   const [selectedLead, setSelectedLead] = useState(null);
@@ -23,6 +24,7 @@ function Leads() {
   const [dateFilter, setDateFilter] = useState("All");
   const [editingLead, setEditingLead] = useState(null);
   const [isAddLeadOpen, setIsAddLeadOpen] = useState(false);
+  const [notesLead, setNotesLead] = useState(null);
 
   const [leads, setLeads] = useState([
     {
@@ -232,6 +234,194 @@ function Leads() {
     setIsAddLeadOpen(false);
   };
 
+  
+  const handleExportCSV = () => {
+    if (leads.length === 0) {
+      alert("No leads available to export.");
+      return;
+    }
+
+    const headers = [
+      "Name",
+      "Company",
+      "Email",
+      "Phone",
+      "Status",
+      "Source",
+      "Created At",
+    ];
+
+    const escapeCSV = (value) =>
+      `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+    const rows = leads.map((lead) =>
+      [
+        lead.name,
+        lead.company,
+        lead.email,
+        lead.phone,
+        lead.status,
+        lead.source,
+        lead.createdAt,
+      ]
+        .map(escapeCSV)
+        .join(",")
+    );
+
+    const csvContent = [headers.join(","), ...rows].join("\r\n");
+    const blob = new Blob(["\uFEFF" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "intellx-leads.csv";
+    link.click();
+
+    URL.revokeObjectURL(url);
+  };
+
+  
+
+  const handleImportCSV = (file) => {
+    if (!file) return;
+
+    if (!file.name.toLowerCase().endsWith(".csv")) {
+      alert("Please select a CSV file.");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      try {
+        const text = String(event.target?.result || "").replace(/^\uFEFF/, "");
+        const lines = text.split(/\r?\n/).filter((line) => line.trim());
+
+        if (lines.length < 2) {
+          alert("The CSV file has no lead records.");
+          return;
+        }
+
+        const parseRow = (line) => {
+          const values = [];
+          let value = "";
+          let quoted = false;
+
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+
+            if (char === '"' && quoted && line[i + 1] === '"') {
+              value += '"';
+              i++;
+            } else if (char === '"') {
+              quoted = !quoted;
+            } else if (char === "," && !quoted) {
+              values.push(value.trim());
+              value = "";
+            } else {
+              value += char;
+            }
+          }
+
+          values.push(value.trim());
+          return values;
+        };
+
+        const headers = parseRow(lines[0]).map((header) =>
+          header.toLowerCase().replace(/[^a-z]/g, "")
+        );
+
+        const column = (names) =>
+          headers.findIndex((header) => names.includes(header));
+
+        const nameIndex = column(["name", "fullname"]);
+        const companyIndex = column(["company"]);
+        const emailIndex = column(["email"]);
+        const phoneIndex = column(["phone"]);
+        const statusIndex = column(["status"]);
+        const sourceIndex = column(["source"]);
+        const dateIndex = column(["createdat", "created"]);
+
+        if (
+          nameIndex === -1 ||
+          companyIndex === -1 ||
+          emailIndex === -1
+        ) {
+          alert("CSV must include Name, Company, and Email columns.");
+          return;
+        }
+
+        const importedLeads = lines.slice(1).map((line) => {
+          const values = parseRow(line);
+          const get = (index) => (index < 0 ? "" : values[index] || "");
+
+          const allowedStatuses = [ 
+            "New",
+            "Contacted",
+            "Meeting Scheduled",
+            "Proposal Sent",
+            "Won",
+            "Lost",
+          ];
+
+          const allowedSources = [
+            "Website",
+            "Google",
+            "LinkedIn",
+            "Referral",
+            "Instagram",
+          ];
+
+          const status = get(statusIndex);
+          const source = get(sourceIndex);
+
+          return {
+            id: Date.now() + Math.random(),
+            name: get(nameIndex),
+            company: get(companyIndex),
+            email: get(emailIndex),
+            phone: get(phoneIndex),
+            status: allowedStatuses.includes(status) ? status : "New",
+            source: allowedSources.includes(source) ? source : "Website",
+            createdAt:
+              get(dateIndex) ||
+              new Date().toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              }),
+          };
+        }).filter((lead) => lead.name && lead.company && lead.email);
+
+        if (importedLeads.length === 0) {
+          alert("No valid leads found in the CSV.");
+          return;
+        }
+
+        setLeads((prevLeads) => [...importedLeads, ...prevLeads]);
+        setActiveTab("All Leads");
+        setStatusFilter("All");
+        setSourceFilter("All");
+        setDateFilter("All");
+        setSearchQuery("");
+        setCurrentPage(1);
+
+        alert(`${importedLeads.length} leads imported successfully.`);
+        } catch {
+        alert("Could not read the CSV file. Please check its format.");
+        }
+      };
+
+    reader.onerror = () => alert("Failed to read the CSV file.");
+    reader.readAsText(file);
+  };
+
+
+
+
   const handleDeleteLead = (leadToDelete) => {
     const confirmed = window.confirm(
       `Are you sure you want to delete ${leadToDelete.name}?`
@@ -294,16 +484,7 @@ function Leads() {
           >
             Manage and track all your leads.
           </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsAddLeadOpen(true)}
-          className="flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-purple-500"
-        >
-        
-          <UserPlus size={16} />
-          Add New Lead
-        </button>
+        </div>     
       </div>
 
       {/* Overview Stats */}
@@ -373,8 +554,22 @@ function Leads() {
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
+              onTakeNotes={setNotesLead}
             />
           </div>
+
+          
+{notesLead && (
+  <LeadNotesModal
+    lead={notesLead}
+    onClose={() => setNotesLead(null)}
+    onSave={(updatedLead) => {
+      handleSaveLead(updatedLead);
+      setNotesLead(updatedLead);
+    }}
+  />
+)}
+
 
           {/* Lead Detail Panel */}
           {selectedLead && (
@@ -386,7 +581,12 @@ function Leads() {
         </div>
 
         {/* Lead Analytics & Actions */}
-        <LeadAnalytics sourceData={sourceData} />
+        <LeadAnalytics 
+          sourceData={sourceData}
+          onAddLead={() => setIsAddLeadOpen(true)}
+          onImportCSV={handleImportCSV}
+          onExportCSV={handleExportCSV} 
+        />
 
         {/* System Status */}
         <SystemStatus />

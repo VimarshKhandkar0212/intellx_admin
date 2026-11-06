@@ -1,4 +1,4 @@
-import { MoreHorizontal,Copy, Eye, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal,Copy, Eye, Pencil, Trash2, NotebookPen } from "lucide-react";
 import {useState} from "react";
 
 function LeadsTable({ 
@@ -13,6 +13,7 @@ function LeadsTable({
   currentPage,
   totalPages,
   onPageChange,
+  onTakeNotes,
 }) {
   const [openMenuId, setOpenMenuId] = useState(null);
     
@@ -284,6 +285,20 @@ function LeadsTable({
                           <Copy size={15} />
                           Duplicate Lead
                         </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onTakeNotes(lead);
+                            setOpenMenuId(null);
+                          }}
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition hover:bg-white/5"
+                          style={{ color: "var(--text-primary)" }}
+                        >
+                          <NotebookPen size={15} />
+                          Take Notes
+                        </button>
+
                       </div>
                     )}
                   </div>
